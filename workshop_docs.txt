@@ -1,0 +1,112 @@
+Github workshop
+Scenario 1 - create a branch and work with it
+# 1. Aggiorna il branch main locale con le ultime modifiche remote
+git switch main
+git pull origin main
+
+# 2. Crea e passa al nuovo branch
+# Flag: -c (--create) -> crea un nuovo branch e ci si sposta sopra
+git switch -c feature/analisi-churn
+# Alternativa classica: git checkout -b feature/analisi-churn
+# Flag: -b -> abbreviazione di branch (crea e fa il checkout)
+
+# 3. [Fase di lavoro: modifiche al codice nel tuo editor]
+
+# 4. Verifica lo stato dell'albero di lavoro e dell'area di stage
+git status
+
+# 5. Aggiungi le modifiche all'area di staging
+# Sintassi: '.' indica tutta la directory corrente e relative sottocartelle
+git add percorso/file_modificato.py
+# Per aggiungere tutte le modifiche: git add .
+
+# 6. Registra le modifiche nella cronologia
+# Flag: -m (--message) -> inserisce il messaggio inline evitando l'apertura dell'editor di default (Vim/Nano)
+git commit -m "feat: aggiunta query di estrazione per analisi churn"
+
+# 7. Invia il branch al server remoto
+# Flag: -u (--set-upstream) -> associa il branch locale a quello remoto (rende sufficiente digitare solo 'git push' in futuro)
+git push -u origin feature/analisi-churn
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Scenario 2 - Rebase
+
+# ==============================================================================
+# SCENARIO: Tu (collaboratore) hai pushato nuovo codice su 'main'.
+# Il collega sta lavorando sul suo branch 'feature/modello-ml' che ora è "indietro".
+# OBIETTIVO: Allineare il branch del collega con 'main' mantenendo la cronologia lineare
+# (senza creare inutili e disordinati "merge commit").
+Il senso: Fare rebase significa dire a Git: "Prendi i miei commit, fai finta che io abbia iniziato a lavorare solo 5 minuti fa a partire dall'ultimo commit di main, e rimetti il mio lavoro in cima.
+⚠️ Il rebase si fa solo sui propri branch personali di feature. Non si fa mai su branch condivisi o pubblici (come main), altrimenti si riscrive la storia su cui stanno poggiando altri colleghi.
+# 
+# ==============================================================================
+# FASE 1: Michele inizia il lavoro in autonomia
+# ======================================================================
+
+# 1. 🌿 Michele crea e si sposta sul proprio branch di feature
+# Flag: -c (--create) -> crea il nuovo branch e vi si posiziona subito
+git switch -c feature/modello-ml
+
+# 2. 💻 [Michele scrive codice nel suo editor...]
+
+# 3. 💾 Michele mette in stage e registra il commit
+git add pipeline_ml.py
+# Flag: -m (--message) -> scrive il messaggio inline evitando l'apertura di Nano o Vim
+git commit -m "feat: implementata baseline del modello"
+
+# ==============================================================================
+# FASE 2: Nel frattempo Collega X ha fatto merge di nuovo codice su 'main'!
+# Michele è ancora sul suo branch e deve allinearsi prima di aprire una PR.
+# ==============================================================================
+
+# 4. 📡 Michele scarica le novità del server (incluso il nuovo main di Collega X)
+# Flag: -p (--prune) -> pulisce i riferimenti locali a branch cancellati sul server
+git fetch origin -p
+
+# 5. 🔄 Michele esegue il rebase su origin/main
+# Meccanismo: Git stacca il commit di Michele, incolla sotto le novità di Collega X,
+# e riapplica il commit di Michele in cima (storia pulita e lineare!)
+git rebase origin/main
+
+# ==============================================================================
+# FASE 3: Risoluzione esito
+# ==============================================================================
+
+# --- CASO VERDE: Nessun file sovrapposto -> il rebase si conclude da solo! Passa a FASE 4 ---
+
+# --- CASO ROSSO 💥: Sia Michele che Collega X hanno modificato le stesse righe ---
+
+# 6a. 🛠️ [Solo se c'è conflitto]: Michele risolve il file nell'editor e lo aggiunge a stage
+git add pipeline_ml.py
+
+# 6b. ▶️ [Solo se c'è conflitto]: Michele ordina a Git di procedere
+# Flag: --continue -> riprende il ciclo di rebase applicando il commit successivo
+git rebase --continue
+
+# 🛑 NOTA EMERGENZA (Se Michele va nel panico e vuole annullare tutto tornando a prima):
+# Flag: --abort -> interrompe il rebase e rimette il branch esattamente come prima
+# git rebase --abort
+
+# ==============================================================================
+# FASE 4: Invio del lavoro al server remoto
+# ==============================================================================
+
+# 7. 🚀 Michele invia il branch aggiornato sul repository remoto
+# Flag: -u (--set-upstream) -> associa il branch locale a quello remoto per i futuri push/pull
+# Flag: --force-with-lease -> (necessario SOLO se Michele aveva già pushato il branch prima del rebase)
+# sovrascrive la cronologia remota in sicurezza, bloccandosi se qualcun altro ha aggiunto commit
+git push -u origin feature/modello-ml
+
+
